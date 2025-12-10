@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fulfillment Helper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="logo-circle">FH</div>
+        <h1>Fulfillment Helper</h1>
+        <p>Полный цикл фулфилмента для маркетплейсов: приёмка, хранение, упаковка, отгрузка.</p>
+      </div>
+    </header>
+
+    <main class="main">
+      <nav class="tabs">
+        <button class="tab-button active" data-tab="about">О компании</button>
+        <button class="tab-button" data-tab="owner">О владельце</button>
+        <button class="tab-button" data-tab="warehouse">Склад</button>
+        <button class="tab-button" data-tab="contacts">Контакты</button>
+      </nav>
+
+      <section id="tab-about" class="tab active">
+        <h2>О компании</h2>
+        <p>
+          Мы занимаемся фулфилментом для продавцов маркетплейсов: Ozon, Wildberries,
+          Яндекс.Маркет и других площадок. Берём на себя всю логистику — вы занимаетесь только продажами.
+        </p>
+        <ul>
+          <li>Приёмка и хранение товара на отапливаемом складе.</li>
+          <li>Упаковка, маркировка, формирование заказов.</li>
+          <li>Доставка на склады маркетплейсов.</li>
+        </ul>
+      </section>
+
+      <section id="tab-owner" class="tab">
+        <h2>О владельце</h2>
+        <p>
+          Здесь можно написать пару абзацев о владельце компании: опыт в логистике, маркетплейсах,
+          подход к работе и ценности. Текст легко поменять в файле <code>index.html</code>.
+        </p>
+      </section>
+
+      <section id="tab-warehouse" class="tab">
+        <h2>Склад</h2>
+        <p>Наш склад расположен по адресу:</p>
+        <p class="address">
+          Южнопортовая ул., 5, стр. 6
+        </p>
+        <a
+          class="button-link"
+          href="https://yandex.ru/profile/1073318465?lang=ru"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Открыть в Яндекс.Картах
+        </a>
+
+        <div class="photos">
+          <div class="photo-placeholder">Фото склада #1</div>
+          <div class="photo-placeholder">Фото склада #2</div>
+          <div class="photo-placeholder">Фото склада #3</div>
+        </div>
+      </section>
+
+      <section id="tab-contacts" class="tab">
+        <h2>Контакты</h2>
+        <p>Свяжитесь с нами удобным способом:</p>
+        <ul>
+          <li>Телефон: +7 999 123-45-67</li>
+          <li>Telegram: @your_username</li>
+          <li>Адрес: Южнопортовая ул., 5, стр. 6</li>
+        </ul>
+        <a
+          class="button-link"
+          href="https://t.me/your_username"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Написать в Telegram
+        </a>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
