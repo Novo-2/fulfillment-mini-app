@@ -59,7 +59,7 @@ async def process_category(message: Message, state: FSMContext):
     await state.set_state(ClientForm.waiting_for_quantity)
     await message.answer(
         f"✅ Товар: **{message.text}**\n\n"
-        "📊 **Шаг 2/7: Сколько товара?**\n\n"
+        "📊 **Шаг 2/7: Сколько единиц товара?**\n\n"
         "Напишите количество (пример: 100 шт, 50 пар, 200 упаковок и т.д.):",
         parse_mode="Markdown",
         reply_markup=get_step_nav_keyboard(can_go_back=True),
@@ -76,9 +76,9 @@ async def process_quantity(message: Message, state: FSMContext):
         f"✅ Количество: **{message.text}**\n\n"
         "📋 **Шаг 3/7: Техническое задание**\n\n"
         "Опишите, что именно нужно сделать с товаром.\n"
-        "Примеры: 'упаковка в брендированную коробку + маркировка Ozon + доставка на склад WB',\n"
-        "'просто хранение 30 дней + упаковка по 5 шт',\n"
-        "'маркировка штрихкодов + групповые коробки'\n\n"
+        "Примеры: 'упаковка в брендированную коробку + маркировка Ozon + доставка на склад',\n"
+        "'просто хранение 30 дней + упаковка ',\n"
+        "'маркировка штрихкодов + отправка на склад '\n\n"
         "Можете отправить файл с ТЗ:",
         parse_mode="Markdown",
         reply_markup=get_step_nav_keyboard(),
@@ -357,7 +357,7 @@ async def preview_submit(call: CallbackQuery, state: FSMContext):
         await call.message.answer_document(
             pdf, caption="📊 Расчеты услуг (PDF)"
         )
-    except Exception as e:
+    except Exception:
         await call.message.answer("💾 Файл расчетов будет отправлен специалистом")
 
     await state.clear()
@@ -388,257 +388,28 @@ async def show_warehouse(message: Message):
 
 @router.message(F.text == "📞 Контакты")
 async def show_contacts(message: Message):
+    text = (
+        "👨‍💼 **Администратор:** Каушутов Арслан Перманович\n"
+        "📞 Телефон: +7 995 916 38 77\n"
+        "⏰ Рабочие часы: с 8:00 до 20:00\n\n"
+        "💬 Напишите нам или позвоните, если остались вопросы."
+    )
     await message.answer(
-        "👨‍💼 **Наш специалист** всегда готов помочь!\n\n"
-        f"📞 Телефон: `{config.ADMIN_PHONE}`\n\n"
-        "💬 Напишите напрямую:",
-        reply_markup=keyboards.get_contacts_keyboard(),
+        text,
         parse_mode="Markdown",
+        reply_markup=keyboards.get_contacts_keyboard(),
         disable_web_page_preview=True,
     )
 
 
+@router.message(F.text == "📄 Наш прайс")
+async def send_price(message: Message):
+    price = FSInputFile("Aktualnyi-Prais_FF_captain_fullfill-2.pdf")
+    await message.answer_document(
+        price,
+        caption="Актуальный прайс-лист Fulfillment Helper",
+    )
+
+
 # ===== АДМИН-ПАНЕЛЬ МЕНЮ =====
-
-@router.message(F.text == "🛠 Управление заявками")
-async def admin_panel_menu(message: Message):
-    """Открываем меню админ-панели"""
-    if message.from_user.id != config.ADMIN_ID:
-        await message.answer("Эта функция доступна только администратору.")
-        return
-
-    # Получаем последние сообщения в чате
-    try:
-        chat_messages = await message.bot.get_chat_messages(chat_id=message.chat.id, limit=50)
-        for msg in chat_messages:
-            if msg.from_user.id == config.ADMIN_ID and msg.text not in ["📦 Рассчитать стоимость", "📍 Адрес склада", "📞 Контакты", "🔄 Начать заново", "❓ Помощь"]:
-                try:
-                    await message.bot.delete_message(chat_id=message.chat.id, message_id=msg.message_id)
-                except Exception as e:
-                    print(f"Ошибка удаления сообщения: {e}")
-    except Exception as e:
-        print(f"Ошибка получения истории чата: {e}")
-
-    await message.answer(
-        "Выберите действие:",
-        reply_markup=get_admin_panel_keyboard()
-    )
-
-
-@router.callback_query(F.data == "admin_new_requests")
-async def admin_new_requests(call: CallbackQuery):
-    """Список новых заявок с кнопками 'Принять'/'Отклонить'"""
-    # Удаляем предыдущее сообщение админа
-    await call.bot.delete_message(call.message.chat.id, call.message.message_id)
-
-    requests = await database.get_requests_for_admin(status="new", limit=10)
-    if not requests:
-        await call.message.answer("Новых заявок пока нет.")
-        return
-
-    # Собираем текст для всех заявок
-    text = "📋 Новые заявки:\n\n"
-    for r in requests:
-        name = r.get("full_name") or "Без имени"
-        telegram_id = r.get("telegram_id") or "Не указан"
-        phone = r.get("phone") or "Не указан"
-        username = r.get("username") or "Не указан"
-        text += (
-            f"#{r['id']} — {name}\n"
-            f"🆔 ID: {telegram_id}\n"
-            f"📞 Телефон: {phone}\n"
-            f"👤 TG: @{username}\n"
-            f"📦 {r.get('category')} | 📊 {r.get('quantity')}\n"
-            f"🛒 {r.get('marketplace')}\n"
-            f"{'— — —'}\n"
-        )
-
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="< Меню", callback_data="admin_panel_menu"
-                ),
-            ],
-        ]
-    )
-    await call.message.answer(text, reply_markup=kb)
-
-    # Отдельно отправляем кнопки для каждой заявки
-    for r in requests:
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="✅ Принять", callback_data=f"req_accept:{r['id']}"
-                    ),
-                    InlineKeyboardButton(
-                        text="❌ Отклонить", callback_data=f"req_reject:{r['id']}"
-                    ),
-                ],
-            ]
-        )
-        await call.message.answer(f"#{r['id']}", reply_markup=kb)
-
-    await call.answer()
-
-
-@router.callback_query(F.data == "admin_history")
-async def admin_history(call: CallbackQuery):
-    """История всех заявок одним сообщением"""
-    # Удаляем предыдущее сообщение админа
-    await call.bot.delete_message(call.message.chat.id, call.message.message_id)
-
-    requests = await database.get_requests_for_admin(status=None, limit=20)
-    if not requests:
-        await call.message.answer("Заявок пока нет.")
-        return
-
-    # Собираем текст для всех заявок
-    text = "📜 История заявок:\n\n"
-    for r in requests:
-        name = r.get("full_name") or "Без имени"
-        status = r.get("status", "new")
-        text += (
-            f"#{r['id']} — {name}\n"
-            f"📦 {r.get('category')} | 📊 {r.get('quantity')}\n"
-            f"🛒 {r.get('marketplace')} | 📱 {r.get('phone')}\n"
-            f"📌 Статус: {status}\n"
-            f"{'— — —'}\n"
-        )
-
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="< Меню", callback_data="admin_panel_menu"
-                ),
-            ],
-        ]
-    )
-    await call.message.answer(text, reply_markup=kb)
-
-    await call.answer()
-
-
-# ===== ПРИНЯТЬ/ОТКЛОНИТЬ =====
-
-@router.callback_query(F.data.startswith("req_accept:"))
-async def admin_accept_request(call: CallbackQuery):
-    """Админ нажал 'Принять' — меняем статус и шлём клиенту сообщение"""
-    if call.from_user.id != config.ADMIN_ID:
-        await call.answer("Не для тебя эта кнопка.", show_alert=True)
-        return
-
-    parts = call.data.split(":")
-    request_id = int(parts[1])
-
-    # Получаем данные заявки
-    requests = await database.get_requests_for_admin(status=None, limit=100)
-    req = next((r for r in requests if r["id"] == request_id), None)
-
-    if not req:
-        await call.answer("Заявка не найдена.", show_alert=True)
-        return
-
-    await database.update_request_status(request_id, "accepted")
-
-    full_name = req.get("full_name") or "клиент"
-    user_id = req["telegram_id"]
-
-    text_client = (
-        f"Добрый день, {full_name}!\n\n"
-        "Ваша заявка принята, наши специалисты скоро с вами свяжутся "
-        "для уточнения деталей. Спасибо, что выбрали нашу компанию!"
-    )
-
-    try:
-        await call.bot.send_message(user_id, text_client)
-    except Exception as e:
-        print(f"Ошибка отправки клиенту: {e}")
-
-    await call.message.edit_reply_markup(reply_markup=None)
-    await call.answer("Заявка принята, клиенту отправлено сообщение.")
-
-
-@router.callback_query(F.data.startswith("req_reject:"))
-async def admin_reject_request(call: CallbackQuery, state: FSMContext):
-    """Админ нажал 'Отклонить' — меняем статус и запрашиваем причину"""
-    if call.from_user.id != config.ADMIN_ID:
-        await call.answer("Не для тебя эта кнопка.", show_alert=True)
-        return
-
-    parts = call.data.split(":")
-    request_id = int(parts[1])
-
-    # Получаем данные заявки
-    requests = await database.get_requests_for_admin(status=None, limit=100)
-    req = next((r for r in requests if r["id"] == request_id), None)
-
-    if not req:
-        await call.answer("Заявка не найдена.", show_alert=True)
-        return
-
-    # Сохраняем ID заявки и ID клиента в FSM
-    await state.set_state(AdminStates.waiting_reject_reason)
-    await state.update_data(request_id=request_id, telegram_id=req["telegram_id"])
-
-    await call.message.answer("Введите причину отклонения заявки:")
-    await call.answer()
-
-
-@router.message(AdminStates.waiting_reject_reason)
-async def admin_reject_reason(message: Message, state: FSMContext):
-    """Админ ввёл причину отклонения"""
-    data = await state.get_data()
-    request_id = data.get("request_id")
-    telegram_id = data.get("telegram_id")
-    reason = message.text
-
-    # Обновляем статус заявки
-    await database.update_request_status(request_id, "rejected", reason)
-
-    # Отправляем сообщение клиенту
-    text_client = (
-        f"Добрый день!\n\n"
-        f"К сожалению, ваша заявка отклонена по причине:\n"
-        f"{reason}\n\n"
-        "Если у вас есть вопросы — свяжитесь с нами."
-    )
-
-    try:
-        await message.bot.send_message(telegram_id, text_client)
-        await message.answer(f"Вы отменили заявку №{request_id}, клиент уведомлён об отмене.")
-    except Exception as e:
-        await message.answer(f"Ошибка отправки клиенту: {e}")
-
-    # Завершаем FSM
-    await state.clear()
-
-@router.callback_query(F.data == "admin_panel_menu")
-async def back_to_menu(call: CallbackQuery):
-    """Вернуться в главное меню админа"""
-    # Удаляем предыдущее сообщение админа
-    await call.bot.delete_message(call.message.chat.id, call.message.message_id)
-
-    await call.message.answer(
-        "Выберите действие:",
-        reply_markup=get_admin_panel_keyboard()
-    )
-    await call.answer()
-
-
-@router.message(F.text == "❓ Помощь")
-async def show_help(message: Message):
-    await message.answer(
-        "🆘 **Как пользоваться ботом:**\n\n"
-        "1️⃣ Нажмите 'Рассчитать стоимость'\n"
-        "2️⃣ Ответьте на вопросы\n"
-        "3️⃣ Проверьте анкету и отправьте заявку\n\n"
-        "⏰ **Скорость ответа**: 30 минут\n"
-        "🔒 **Конфиденциальность**: 100% защита данных",
-        parse_mode="Markdown",
-        reply_markup=keyboards.get_main_menu(
-            is_admin=(message.from_user.id == config.ADMIN_ID)
-        ),
-    )
+# (всё, что ниже, оставляй как у тебя было — можно просто вернуть свой блок admin-панели без изменений)

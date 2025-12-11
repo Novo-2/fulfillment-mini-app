@@ -11,7 +11,11 @@ def get_main_menu(is_admin: bool = False):
     """Главное меню"""
     rows = [
         [KeyboardButton(text="📦 Рассчитать стоимость")],
-        [KeyboardButton(text="📍 Адрес склада"), KeyboardButton(text="📞 Контакты")],
+        [
+            KeyboardButton(text="📍 Адрес склада"),
+            KeyboardButton(text="📞 Контакты"),
+        ],
+        [KeyboardButton(text="📄 Наш прайс")],
     ]
 
     if is_admin:
@@ -30,9 +34,7 @@ def get_main_menu(is_admin: bool = False):
 def get_restart_keyboard():
     """Кнопка начать заново"""
     kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🔄 Начать заново")]
-        ],
+        keyboard=[[KeyboardButton(text="🔄 Начать заново")]],
         resize_keyboard=True,
         one_time_keyboard=False,
     )
@@ -56,6 +58,15 @@ def get_location_keyboard():
 
 def get_contacts_keyboard():
     """Контакты админа"""
+    phone_clean = ""
+    if config.ADMIN_PHONE:
+        phone_clean = (
+            config.ADMIN_PHONE.replace(" ", "")
+            .replace("-", "")
+            .replace("(", "")
+            .replace(")", "")
+        )
+
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -67,13 +78,7 @@ def get_contacts_keyboard():
             [
                 InlineKeyboardButton(
                     text="📞 Позвонить",
-                    url="tel:"
-                    + config.ADMIN_PHONE.replace(" ", "")
-                    .replace("-", "")
-                    .replace("(", "")
-                    .replace(")", "")
-                    if config.ADMIN_PHONE
-                    else "tel:"
+                    url=f"tel:{phone_clean}" if phone_clean else "tel:",
                 )
             ],
         ]
@@ -85,7 +90,12 @@ def get_contact_request_keyboard():
     """Кнопка для отправки номера телефона"""
     kb = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="📱 Отправить номер телефона", request_contact=True)]
+            [
+                KeyboardButton(
+                    text="📱 Отправить номер телефона",
+                    request_contact=True,
+                )
+            ]
         ],
         resize_keyboard=True,
         one_time_keyboard=True,
@@ -97,29 +107,22 @@ def get_contact_request_keyboard():
 
 
 def get_step_nav_keyboard(can_go_back: bool = True):
-    """
-    Инлайн-кнопки для навигации по шагам анкеты.
-    callback_data:
-      - 'step_back'  — перейти на предыдущий шаг
-      - 'step_next'  — перейти на следующий шаг / к следующему вопросу
-    """
+    """Инлайн-кнопки для навигации по шагам анкеты"""
     buttons = []
     if can_go_back:
         buttons.append(
             InlineKeyboardButton(text="⬅ Назад", callback_data="step_back")
         )
-    buttons.append(InlineKeyboardButton(text="➡ Далее", callback_data="step_next"))
+    buttons.append(
+        InlineKeyboardButton(text="➡ Далее", callback_data="step_next")
+    )
 
     kb = InlineKeyboardMarkup(inline_keyboard=[buttons])
     return kb
 
 
 def get_preview_keyboard():
-    """
-    Кнопки на финальном экране:
-      - 'edit_form'   — вернуться к редактированию (сначала к первому шагу)
-      - 'submit_form' — отправить админу
-    """
+    """Кнопки на финальном экране"""
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -138,9 +141,7 @@ def get_preview_keyboard():
 
 
 def get_folder_keyboard():
-    """
-    Клавиатура для выбора папки (категории заявки)
-    """
+    """Клавиатура для выбора папки (категории заявки)"""
     categories = [
         "Одежда и обувь",
         "Электроника и техника",
@@ -176,6 +177,7 @@ def get_admin_panel_keyboard():
         ]
     )
     return kb
+
 
 def get_folder_list_keyboard():
     """Клавиатура для выбора папки"""
