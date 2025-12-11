@@ -57,7 +57,6 @@ def get_location_keyboard():
 
 
 def get_contacts_keyboard():
-    """Контакты админа"""
     phone_clean = ""
     if config.ADMIN_PHONE:
         phone_clean = (
@@ -67,23 +66,28 @@ def get_contacts_keyboard():
             .replace(")", "")
         )
 
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="💬 Написать админу",
-                    url=f"https://t.me/{config.ADMIN_USERNAME}",
-                )
-            ],
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="💬 Написать админу",
+                url=f"https://t.me/{config.ADMIN_USERNAME}",
+            )
+        ]
+    ]
+
+    if phone_clean:
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text="📞 Позвонить",
-                    url=f"tel:{phone_clean}" if phone_clean else "tel:",
+                    url=f"tel:{phone_clean}",
                 )
-            ],
-        ]
-    )
+            ]
+        )
+
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return kb
+
 
 
 def get_contact_request_keyboard():
@@ -197,3 +201,4 @@ def get_folder_list_keyboard():
     ]
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return kb
+
