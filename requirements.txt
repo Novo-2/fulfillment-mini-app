@@ -1,3 +1,5 @@
 aiogram==3.11.0
 python-dotenv
 aiosqlite
+pip3 install -r requirements.txt
+
